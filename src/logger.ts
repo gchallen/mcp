@@ -8,20 +8,20 @@ log4js.configure({
   appenders: {
     console: {
       type: "console",
-      layout: useJsonLayout 
+      layout: useJsonLayout
         ? { type: "json" }
-        : { 
-            type: "pattern", 
-            pattern: "%[[%d] [%p] [%c]%] %m" 
-          }
-    }
+        : {
+            type: "pattern",
+            pattern: "%[[%d] [%p] [%c]%] %m",
+          },
+    },
   },
   categories: {
-    default: { 
-      appenders: ["console"], 
-      level: logLevel 
-    }
-  }
+    default: {
+      appenders: ["console"],
+      level: logLevel,
+    },
+  },
 })
 
 // Export a configured logger for the application
