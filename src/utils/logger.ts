@@ -70,10 +70,8 @@ class StructuredLogger {
     const nodeEnv = process.env.NODE_ENV
     if (nodeEnv === "test") {
       return LogSeverity.ERROR // Only show errors and above in tests
-    } else if (nodeEnv === "production") {
-      return LogSeverity.INFO // Show info and above in production
     } else {
-      return LogSeverity.DEBUG // Show everything in development
+      return LogSeverity.INFO // Default to INFO for all environments
     }
   }
 

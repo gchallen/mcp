@@ -58,8 +58,11 @@ const loggingMiddleware = (req: express.Request, res: express.Response, next: ex
   delete sanitizedHeaders.cookie
   delete sanitizedHeaders["x-api-key"]
 
+  // Use DEBUG level for health checks to reduce noise
+  const logLevel = req.path === "/health" ? logger.debug.bind(logger) : logger.info.bind(logger)
+  
   // Log request (without sensitive data)
-  logger.info("Request received", {
+  logLevel("Request received", {
     method: req.method,
     url: req.url,
     // Only log specific safe headers
@@ -78,7 +81,7 @@ const loggingMiddleware = (req: express.Request, res: express.Response, next: ex
   // Log response when finished
   res.on("finish", () => {
     const duration = Date.now() - startTime
-    logger.info("Request completed", {
+    logLevel("Request completed", {
       method: req.method,
       url: req.url,
       statusCode: res.statusCode,
@@ -212,10 +215,49 @@ try {
   process.exit(1)
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info("Server started", {
     port: PORT,
     url: `http://localhost:${PORT}`,
     environment: process.env.NODE_ENV || "development",
   })
 })
+
+// Graceful shutdown handling
+let isShuttingDown = false
+const gracefulShutdown = async (signal: string) => {
+  if (isShuttingDown) {
+    logger.debug("Shutdown already in progress, ignoring signal", { signal })
+    return
+  }
+  isShuttingDown = true
+  
+  logger.info("Received shutdown signal", { signal })
+  
+  // Stop accepting new connections
+  server.close((err) => {
+    if (err) {
+      logger.debug("HTTP server already closed or error occurred", { error: err.message })
+    } else {
+      logger.info("HTTP server closed")
+    }
+  })
+
+  try {
+    // Close Redis connection
+    await redisClient.disconnect()
+    logger.info("Redis connection closed")
+  } catch (error) {
+    logger.debug("Redis connection already closed or error occurred", { 
+      error: error instanceof Error ? error.message : "Unknown error" 
+    })
+  }
+
+  // Exit immediately after cleanup - tsx gives us enough time
+  logger.info("Graceful shutdown complete")
+  process.exit(0)
+}
+
+// Handle shutdown signals
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"))
+process.on("SIGINT", () => gracefulShutdown("SIGINT"))
