@@ -123,8 +123,9 @@ app.use(loggingMiddleware)
 // Apply base security headers to all routes
 app.use(baseSecurityHeaders)
 
-// Enable CORS pre-flight requests
-app.options("*", cors(corsOptions))
+// Enable CORS globally instead of using app.options with wildcard pattern
+// This avoids Express 5 path-to-regexp issues with wildcard patterns
+app.use(cors(corsOptions))
 
 const authProvider = new EverythingAuthProvider()
 // Auth configuration
