@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals"
 import { Request, Response, NextFunction } from "express"
 import { userAuthorization } from "./common.js"
-import { readMcpInstallation, saveMcpInstallation, generateMcpTokens } from "../services/auth.js"
+import { saveMcpInstallation, generateMcpTokens } from "../services/auth.js"
 import { McpInstallation } from "../types.js"
 import { setRedisClient, MockRedisClient } from "../redis.js"
 
@@ -25,7 +25,7 @@ describe("userAuthorization middleware", () => {
 
     res = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),  
+      json: jest.fn().mockReturnThis(),
       set: jest.fn().mockReturnThis(),
     } as unknown as Response
 
