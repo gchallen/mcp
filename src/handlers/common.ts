@@ -105,7 +105,7 @@ export async function userAuthorization(req: Request, res: Response, next: NextF
       return
     }
   }
-  
+
   // User is authorized, continue to next middleware
   next()
 }

@@ -28,7 +28,8 @@ const msalConfig: Configuration = {
       loggerCallback: (level, message, containsPii) => {
         if (containsPii) return
         // Only log warnings and errors to reduce noise
-        if (level <= 2) { // Error (0) and Warning (1) levels only
+        if (level <= 2) {
+          // Error (0) and Warning (1) levels only
           logger.debug(`MSAL ${level}: ${message}`)
         }
       },
