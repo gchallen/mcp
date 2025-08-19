@@ -49,7 +49,7 @@ export async function callGraphAPI<T = unknown>(
 ): Promise<T> {
   try {
     // Build URL with query parameters
-    const url = new URL(endpoint, GRAPH_CONFIG.baseUrl)
+    const url = new URL(`${GRAPH_CONFIG.baseUrl}/${endpoint}`)
     if (queryParams) {
       Object.entries(queryParams).forEach(([key, value]) => {
         url.searchParams.append(key, String(value))
