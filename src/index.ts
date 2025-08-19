@@ -15,6 +15,7 @@ import { EverythingAuthProvider } from "./auth/provider.js"
 import { BASE_URI, PORT } from "./config.js"
 import { authContext } from "./handlers/common.js"
 import { handleFakeAuthorize, handleFakeAuthorizeRedirect } from "./handlers/fakeauth.js"
+import { handleAzureAuthorize, handleAzureAuthorizeRedirect, handleAzureHealthCheck } from "./handlers/azureauth.js"
 import { handleStreamableHTTP } from "./handlers/shttp.js"
 import { handleMessage, handleSSEConnection } from "./handlers/sse.js"
 import { redisClient } from "./redis.js"
@@ -60,7 +61,7 @@ const loggingMiddleware = (req: express.Request, res: express.Response, next: ex
 
   // Use DEBUG level for health checks to reduce noise
   const logLevel = req.path === "/health" ? logger.debug.bind(logger) : logger.info.bind(logger)
-  
+
   // Log request (without sensitive data)
   logLevel("Request received", {
     method: req.method,
@@ -188,6 +189,11 @@ app.get("/health", async (req, res) => {
   }
 })
 
+// Root route handler for MCP connections
+app.post("/", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
+app.get("/", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
+app.delete("/", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
+
 // MCP routes (legacy SSE transport)
 app.get("/sse", cors(corsOptions), bearerAuth, authContext, sseHeaders, handleSSEConnection)
 app.post("/message", cors(corsOptions), bearerAuth, authContext, sensitiveDataHeaders, handleMessage)
@@ -207,6 +213,11 @@ app.get("/mcp-logo.png", (req, res) => {
 app.get("/fakeupstreamauth/authorize", cors(corsOptions), handleFakeAuthorize)
 app.get("/fakeupstreamauth/callback", cors(corsOptions), handleFakeAuthorizeRedirect)
 
+// Azure OAuth routes
+app.get("/azureauth/authorize", cors(corsOptions), handleAzureAuthorize)
+app.get("/azureauth/callback", cors(corsOptions), handleAzureAuthorizeRedirect)
+app.get("/azureauth/health", cors(corsOptions), handleAzureHealthCheck)
+
 try {
   await redisClient.connect()
 } catch (error) {
@@ -215,10 +226,22 @@ try {
 }
 
 const server = app.listen(PORT, () => {
+  // Determine which OAuth provider is configured
+  const isAzureConfigured = !!(
+    process.env.AZURE_CLIENT_ID &&
+    process.env.AZURE_CLIENT_SECRET &&
+    process.env.AZURE_AUTHORITY
+  )
+
+  const oauthProvider = isAzureConfigured ? "Azure AD" : "Fake OAuth (development)"
+  const authEndpoint = isAzureConfigured ? `${BASE_URI}/azureauth/authorize` : `${BASE_URI}/fakeupstreamauth/authorize`
+
   logger.info("Server started", {
     port: PORT,
     url: `http://localhost:${PORT}`,
     environment: process.env.NODE_ENV || "development",
+    oauthProvider,
+    authorizationEndpoint: authEndpoint,
   })
 })
 
@@ -230,9 +253,9 @@ const gracefulShutdown = async (signal: string) => {
     return
   }
   isShuttingDown = true
-  
+
   logger.info("Received shutdown signal", { signal })
-  
+
   // Stop accepting new connections
   server.close((err) => {
     if (err) {
@@ -247,8 +270,8 @@ const gracefulShutdown = async (signal: string) => {
     await redisClient.disconnect()
     logger.info("Redis connection closed")
   } catch (error) {
-    logger.debug("Redis connection already closed or error occurred", { 
-      error: error instanceof Error ? error.message : "Unknown error" 
+    logger.debug("Redis connection already closed or error occurred", {
+      error: error instanceof Error ? error.message : "Unknown error",
     })
   }
 
