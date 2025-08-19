@@ -14,7 +14,7 @@ export default {
       },
     ],
   },
-  testPathIgnorePatterns: ["/node_modules/", "/dist/", "/scratch/"],
+  testPathIgnorePatterns: ["/node_modules/", "/dist/", "/scratch/", "/outlook-mcp/"],
   injectGlobals: true,
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 }
