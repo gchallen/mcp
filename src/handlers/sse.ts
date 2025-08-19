@@ -8,6 +8,7 @@ import { logMcpMessage } from "./common.js"
 import { logger } from "../utils/logger.js"
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       /**
