@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build outputs
+dist
+*.tsbuildinfo
+
+# Coverage
+coverage
+
+# Environment
+.env*
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode
+.idea
+
+# Git
+.git
+
+# Docker
+Dockerfile
+.dockerignore

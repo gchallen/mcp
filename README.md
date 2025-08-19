@@ -7,6 +7,7 @@ A comprehensive example implementation of a scalable Model Context Protocol (MCP
 ## Overview
 
 The Everything Server is an open-source reference implementation that showcases:
+
 - **Complete [MCP Protocol](https://modelcontextprotocol.io/specification) Support**: All MCP features including tools, resources, prompts, sampling, completions, and logging
 - **Multiple [Transport Methods](https://modelcontextprotocol.io/docs/concepts/transports)**: Streamable HTTP (SHTTP) and Server-Sent Events (SSE)
 - **Comprehensive Auth**: OAuth 2.0 with fake upstream provider for testing
@@ -17,6 +18,7 @@ This server serves as both primarily as a learning resource, and an example impl
 ## Features
 
 ### MCP Protocol Features
+
 - **[Tools](https://modelcontextprotocol.io/docs/concepts/tools)**: 7 demonstration tools including echo, add, long-running operations, LLM sampling, image handling, annotations, and resource references
 - **[Resources](https://modelcontextprotocol.io/docs/concepts/resources)**: 100 example resources with pagination, templates, and subscription support
 - **[Prompts](https://modelcontextprotocol.io/docs/concepts/prompts)**: Simple and complex prompts with argument support and resource embedding
@@ -26,6 +28,7 @@ This server serves as both primarily as a learning resource, and an example impl
 - **Notifications**: Progress updates, resource updates, and stderr messages
 
 ### Transport & Infrastructure
+
 - **[Streamable HTTP](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http)**: Full implementation with GET/POST/DELETE support
 - **[SSE Transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#server-sent-events)**: Backwards-compatible Server-Sent Events
 - **Redis Integration**: Pub/sub message routing and session state management
@@ -33,6 +36,7 @@ This server serves as both primarily as a learning resource, and an example impl
 - **Horizontal Scaling**: Any instance can handle any request
 
 ### Authentication & Security
+
 - **[OAuth 2.0](https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization)**: Complete authorization flow with PKCE support
 - **Fake Auth Provider**: Built-in testing provider with localStorage user management
 - **Session Ownership**: User isolation and access control
@@ -42,11 +46,13 @@ This server serves as both primarily as a learning resource, and an example impl
 ## Installation
 
 ### Prerequisites
+
 - Node.js >= 16
 - Redis server
 - npm or yarn
 
 ### Setup
+
 ```bash
 # Clone the repository
 git clone https://github.com/modelcontextprotocol/example-remote-server.git
@@ -61,7 +67,9 @@ cp .env.example .env
 ```
 
 ### Configuration
+
 Environment variables (`.env` file):
+
 ```
 PORT=3232                          # Server port
 BASE_URI=http://localhost:3232     # Base URI for OAuth redirects
@@ -73,6 +81,7 @@ REDIS_PASSWORD=                    # Redis password (if required)
 ## Development
 
 ### Commands
+
 ```bash
 # Start development server with hot reload
 npm run dev
@@ -94,6 +103,7 @@ npm test
 ```
 
 ### Project Structure
+
 ```
 ├── src/
 │   ├── index.ts              # Express app setup and routes
@@ -122,6 +132,7 @@ npm test
 ## API Endpoints
 
 ### MCP Endpoints
+
 - `GET/POST/DELETE /mcp` - Streamable HTTP transport endpoint
   - `POST`: Initialize sessions or send messages
   - `GET`: Establish SSE streams
@@ -130,11 +141,13 @@ npm test
 - `POST /message` - Legacy message endpoint for SSE transport
 
 ### Authentication Endpoints
+
 - `GET /fakeupstreamauth/authorize` - Fake OAuth authorization page
 - `GET /fakeupstreamauth/redirect` - OAuth redirect handler
 - OAuth 2.0 endpoints provided by MCP SDK auth router
 
 ### Headers
+
 - `Mcp-Session-Id`: Session identifier for Streamable HTTP
 - `Authorization: Bearer <token>`: OAuth access token
 - Standard MCP headers as per protocol specification
@@ -155,7 +168,9 @@ See [docs/user-id-system.md](docs/user-id-system.md) for detailed authentication
 ## Transport Methods
 
 ### Streamable HTTP (Recommended)
+
 Modern [transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) supporting bidirectional communication over HTTP:
+
 - Single endpoint for all operations
 - Session management via headers
 - Efficient message buffering
@@ -164,7 +179,9 @@ Modern [transport](https://modelcontextprotocol.io/specification/2025-03-26/basi
 See [docs/streamable-http-design.md](docs/streamable-http-design.md) for implementation details.
 
 ### Server-Sent Events (Legacy)
+
 Backwards-compatible [transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#server-sent-events) using SSE:
+
 - Separate endpoints for SSE streams and messages
 - Session management via URL parameters
 - Redis-backed message routing
@@ -175,18 +192,21 @@ Backwards-compatible [transport](https://modelcontextprotocol.io/specification/2
 The server is designed for horizontal scaling using Redis as the backbone:
 
 ### Session State Management
+
 - **Redis Storage**: All session state stored in Redis
 - **5-minute TTL**: Automatic session cleanup
 - **Session Ownership**: User isolation via Redis keys
 - **Stateless Servers**: Any instance can handle any request
 
 ### Message Routing
+
 - **Pub/Sub Channels**: Redis channels for message distribution
 - **Message Buffering**: Reliable delivery for disconnected clients
 - **Connection State**: Tracked via pub/sub subscription counts
 - **Automatic Cleanup**: No explicit cleanup required
 
 ### Redis Key Structure
+
 ```
 session:{sessionId}:owner                    # Session ownership
 mcp:shttp:toserver:{sessionId}              # Client→Server messages
@@ -197,6 +217,7 @@ mcp:control:{sessionId}                     # Control messages
 ## Testing
 
 ### Running Tests
+
 ```bash
 # Run all tests
 npm test
@@ -210,13 +231,16 @@ npm test -- --coverage
 ```
 
 ### Test Categories
+
 - **Unit Tests**: Individual component testing
 - **Integration Tests**: Transport and Redis integration
 - **Auth Tests**: OAuth flow and session ownership
 - **Multi-user Tests**: User isolation and access control
 
 ### Manual Testing
+
 The `scratch/` directory contains utility scripts for testing:
+
 - `oauth.sh` - Test OAuth flows
 - `simple-test-client.js` - Basic client implementation
 - `test-shttp-client.ts` - Streamable HTTP testing
@@ -225,10 +249,11 @@ The `scratch/` directory contains utility scripts for testing:
 ## Security
 
 ### Implemented Security Measures
+
 - **Authentication**: [OAuth 2.0](https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization) with bearer tokens
 - **Authorization**: User-based session ownership
 - **Session Isolation**: Users can only access their own sessions
-- **Security Headers**: 
+- **Security Headers**:
   - Content Security Policy (CSP)
   - Strict Transport Security (HSTS)
   - X-Frame-Options
@@ -237,6 +262,7 @@ The `scratch/` directory contains utility scripts for testing:
 - **Error Handling**: Sanitized error responses
 
 ### Security Best Practices
+
 1. Always use HTTPS in production
 2. Configure proper CORS origins
 3. Use strong client secrets
@@ -248,7 +274,9 @@ The `scratch/` directory contains utility scripts for testing:
 ## Monitoring & Debugging
 
 ### Logging
+
 Structured JSON logging with sanitized outputs:
+
 - HTTP request/response logging
 - Authentication events
 - Session lifecycle events
@@ -256,6 +284,7 @@ Structured JSON logging with sanitized outputs:
 - Error tracking
 
 ### Redis Monitoring
+
 ```bash
 # Monitor session ownership
 redis-cli KEYS "session:*:owner"
@@ -271,6 +300,7 @@ redis-cli GET "session:{sessionId}:owner"
 ```
 
 ### Debug Tools
+
 - Development scripts in `scratch/` directory
 - Comprehensive test suite
 - Hot-reload development mode
@@ -281,6 +311,7 @@ redis-cli GET "session:{sessionId}:owner"
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 ### Development Workflow
+
 1. Fork the repository
 2. Create a feature branch
 3. Implement your changes
@@ -290,6 +321,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 7. Submit a pull request
 
 ### Code Style
+
 - TypeScript with strict mode
 - ESLint configuration included
 - Prettier formatting recommended

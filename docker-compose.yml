@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis:6379
+      # Add other environment variables as needed
+      # - GOOGLE_CLOUD_PROJECT=your-project
+      # - CLIENT_SECRET=your-secret
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+volumes:
+  redis-data:
+
+networks:
+  mcp-network:
+    driver: bridge

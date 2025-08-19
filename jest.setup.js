@@ -1,5 +1,5 @@
 // Ensure NODE_ENV is set to test
-process.env.NODE_ENV = 'test';
+process.env.NODE_ENV = "test"
 
 // Optionally suppress console.log during tests (but keep console.error for debugging)
 // Uncomment the following lines if you want to suppress all console.log output:

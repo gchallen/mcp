@@ -7,8 +7,11 @@ The MCP server implements a comprehensive user identification and session owners
 ## Architecture Components
 
 ### 1. User ID Management (localStorage)
+
 ### 2. OAuth Authorization Flow
+
 ### 3. Redis Session Ownership
+
 ### 4. Session Access Validation
 
 ---
@@ -33,10 +36,10 @@ sequenceDiagram
     participant Browser
     participant LocalStorage
     participant AuthPage as Fake Auth Page
-    
+
     Browser->>AuthPage: Load /fakeupstreamauth/authorize
     AuthPage->>LocalStorage: Check mcpUserId
-    
+
     alt User ID exists
         LocalStorage-->>AuthPage: Return existing UUID
         AuthPage->>Browser: Display existing ID
@@ -45,19 +48,19 @@ sequenceDiagram
         AuthPage->>LocalStorage: Store new mcpUserId
         AuthPage->>Browser: Display new ID
     end
-    
+
     Note over AuthPage: User can edit or regenerate ID
     AuthPage->>LocalStorage: Update mcpUserId (if changed)
 ```
 
 ### User ID Operations
 
-| Operation | Description | Implementation |
-|-----------|-------------|----------------|
-| **Generate** | Create new UUID v4 | `generateUUID()` function |
-| **Retrieve** | Get existing or create new | `getUserId()` function |
-| **Update** | Edit existing ID | `editUserId()` function |
-| **Persist** | Store in localStorage | `localStorage.setItem('mcpUserId', userId)` |
+| Operation    | Description                | Implementation                              |
+| ------------ | -------------------------- | ------------------------------------------- |
+| **Generate** | Create new UUID v4         | `generateUUID()` function                   |
+| **Retrieve** | Get existing or create new | `getUserId()` function                      |
+| **Update**   | Edit existing ID           | `editUserId()` function                     |
+| **Persist**  | Store in localStorage      | `localStorage.setItem('mcpUserId', userId)` |
 
 ---
 
@@ -75,21 +78,21 @@ sequenceDiagram
     participant FakeAuth as Fake Upstream Auth
     participant LocalStorage
     participant Redis
-    
+
     Client->>MCPServer: Request authorization
     MCPServer->>AuthPage: Redirect to auth page
     AuthPage->>Client: Show MCP authorization page
     Client->>FakeAuth: Click "Continue to Authentication"
-    
+
     FakeAuth->>LocalStorage: Get/Create userId
     LocalStorage-->>FakeAuth: Return userId
     FakeAuth->>Client: Show userId management UI
-    
+
     Client->>FakeAuth: Complete authentication
     FakeAuth->>MCPServer: Redirect with code + userId
     MCPServer->>Redis: Store userId in McpInstallation
     MCPServer->>Client: Return access token
-    
+
     Note over Redis: McpInstallation.userId = userId
 ```
 
@@ -111,11 +114,11 @@ The userId is embedded in the authorization flow:
 ```javascript
 // In fake auth page
 function authorize() {
-  const userId = getUserId(); // From localStorage
-  const url = new URL(redirectUri);
-  url.searchParams.set('userId', userId);
-  url.searchParams.set('code', 'fakecode');
-  window.location.href = url.toString();
+  const userId = getUserId() // From localStorage
+  const url = new URL(redirectUri)
+  url.searchParams.set("userId", userId)
+  url.searchParams.set("code", "fakecode")
+  window.location.href = url.toString()
 }
 ```
 
@@ -136,10 +139,10 @@ mcp:control:{sessionId}   → [pub/sub channel]        # Control messages
 
 ### Redis Operations
 
-| Operation | Key Pattern | Value | Purpose |
-|-----------|-------------|--------|---------|
-| **Set Owner** | `session:{sessionId}:owner` | `userId` | Store session owner |
-| **Get Owner** | `session:{sessionId}:owner` | `userId` | Retrieve session owner |
+| Operation      | Key Pattern                      | Value        | Purpose                                         |
+| -------------- | -------------------------------- | ------------ | ----------------------------------------------- |
+| **Set Owner**  | `session:{sessionId}:owner`      | `userId`     | Store session owner                             |
+| **Get Owner**  | `session:{sessionId}:owner`      | `userId`     | Retrieve session owner                          |
 | **Check Live** | `mcp:shttp:toserver:{sessionId}` | `numsub > 0` | Check if session active via pub/sub subscribers |
 
 ### Session Liveness Mechanism
@@ -154,7 +157,7 @@ graph TD
     D --> E[MCP Server Shutdown]
     E --> F[Unsubscribe from channel]
     F --> G[numsub = 0 → Session is DEAD]
-    
+
     H[isLive() function] --> I[Check numsub count]
     I --> J{numsub > 0?}
     J -->|Yes| K[Session is Live]
@@ -162,6 +165,7 @@ graph TD
 ```
 
 **Why this works:**
+
 - When an MCP server starts, it subscribes to `mcp:shttp:toserver:{sessionId}`
 - When it shuts down (gracefully or crashes), Redis automatically removes the subscription
 - `numsub` reflects the actual state without requiring explicit cleanup
@@ -191,11 +195,11 @@ sequenceDiagram
     participant Handler as shttp Handler
     participant Auth as Auth Middleware
     participant Redis
-    
+
     Client->>Handler: MCP Request with session-id
     Handler->>Auth: Extract userId from token
     Auth-->>Handler: Return userId
-    
+
     alt New Session (Initialize)
         Handler->>Handler: Generate new sessionId
         Handler->>Redis: setSessionOwner(sessionId, userId)
@@ -205,7 +209,7 @@ sequenceDiagram
     else Existing Session
         Handler->>Redis: isSessionOwnedBy(sessionId, userId)
         Redis-->>Handler: Return ownership status
-        
+
         alt Session Owned by User
             Handler->>Client: Process request
         else Session Not Owned
@@ -221,11 +225,11 @@ sequenceDiagram
     participant Client
     participant Handler as shttp Handler
     participant Redis
-    
+
     Client->>Handler: DELETE /mcp (session-id: xyz)
     Handler->>Handler: Extract userId from auth
     Handler->>Redis: isSessionOwnedBy(sessionId, userId)
-    
+
     alt Session Owned by User
         Redis-->>Handler: true
         Handler->>Redis: shutdownSession(sessionId)
@@ -238,11 +242,11 @@ sequenceDiagram
 
 ### Request Authorization Matrix
 
-| Request Type | Session ID | User ID | Authorization Check |
-|-------------|-----------|---------|-------------------|
-| **Initialize** | None | Required | Create new session |
-| **Existing Session** | Required | Required | `isSessionOwnedBy()` |
-| **DELETE Session** | Required | Required | `isSessionOwnedBy()` |
+| Request Type         | Session ID | User ID  | Authorization Check  |
+| -------------------- | ---------- | -------- | -------------------- |
+| **Initialize**       | None       | Required | Create new session   |
+| **Existing Session** | Required   | Required | `isSessionOwnedBy()` |
+| **DELETE Session**   | Required   | Required | `isSessionOwnedBy()` |
 
 ---
 
@@ -257,19 +261,19 @@ graph TB
         A2[Session: session-A]
         A3[Redis: session:A:owner → userA]
     end
-    
+
     subgraph "User B"
         B1[localStorage: userB-id]
         B2[Session: session-B]
         B3[Redis: session:B:owner → userB]
     end
-    
+
     subgraph "Redis Isolation"
         R1[session:A:owner → userA-id]
         R2[session:B:owner → userB-id]
         R3[Ownership Validation]
     end
-    
+
     A3 --> R1
     B3 --> R2
     R1 --> R3
@@ -286,12 +290,12 @@ graph TB
 
 ### Attack Prevention
 
-| Attack Vector | Prevention | Implementation |
-|---------------|------------|----------------|
-| **Session Hijacking** | Ownership validation | `isSessionOwnedBy()` check |
-| **Cross-User Access** | User ID verification | Extract userId from AuthInfo |
-| **Session Spoofing** | Token validation | Bearer token middleware |
-| **Unauthorized DELETE** | Ownership check | Validate before shutdown |
+| Attack Vector           | Prevention           | Implementation               |
+| ----------------------- | -------------------- | ---------------------------- |
+| **Session Hijacking**   | Ownership validation | `isSessionOwnedBy()` check   |
+| **Cross-User Access**   | User ID verification | Extract userId from AuthInfo |
+| **Session Spoofing**    | Token validation     | Bearer token middleware      |
+| **Unauthorized DELETE** | Ownership check      | Validate before shutdown     |
 
 ---
 
@@ -302,11 +306,11 @@ graph TB
 ```typescript
 // Session access errors
 if (!userId) {
-  return 401; // Unauthorized: User ID required
+  return 401 // Unauthorized: User ID required
 }
 
-if (!await isSessionOwnedBy(sessionId, userId)) {
-  return 400; // Bad Request: Session access denied
+if (!(await isSessionOwnedBy(sessionId, userId))) {
+  return 400 // Bad Request: Session access denied
 }
 ```
 

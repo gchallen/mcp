@@ -1,8 +1,12 @@
-import { Response } from 'express';
-import { OAuthServerProvider, AuthorizationParams } from '@modelcontextprotocol/sdk/server/auth/provider.js';
-import { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
-import { OAuthClientInformationFull, OAuthTokenRevocationRequest, OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js';
-import { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
+import { Response } from "express"
+import { OAuthServerProvider, AuthorizationParams } from "@modelcontextprotocol/sdk/server/auth/provider.js"
+import { OAuthRegisteredClientsStore } from "@modelcontextprotocol/sdk/server/auth/clients.js"
+import {
+  OAuthClientInformationFull,
+  OAuthTokenRevocationRequest,
+  OAuthTokens,
+} from "@modelcontextprotocol/sdk/shared/auth.js"
+import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js"
 import {
   exchangeToken,
   generateToken,
@@ -16,24 +20,24 @@ import {
   generateMcpTokens,
   saveMcpInstallation,
   saveRefreshToken,
-} from '../services/auth.js';
-import { InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+} from "../services/auth.js"
+import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.js"
 
 /**
  * Implementation of the OAuthRegisteredClientsStore interface using the existing client registration system
  */
 export class EverythingOAuthClientsStore implements OAuthRegisteredClientsStore {
   async getClient(clientId: string): Promise<OAuthClientInformationFull | undefined> {
-    const registration = await getClientRegistration(clientId);
+    const registration = await getClientRegistration(clientId)
     if (!registration) {
-      return undefined;
+      return undefined
     }
-    return registration;
+    return registration
   }
 
   async registerClient(client: OAuthClientInformationFull): Promise<OAuthClientInformationFull> {
-    await saveClientRegistration(client.client_id, client);
-    return client;
+    await saveClientRegistration(client.client_id, client)
+    return client
   }
 }
 
@@ -41,48 +45,50 @@ export class EverythingOAuthClientsStore implements OAuthRegisteredClientsStore 
  * Implementation of the OAuthServerProvider interface for upstream authentication
  */
 export class EverythingAuthProvider implements OAuthServerProvider {
-  private _clientsStore: EverythingOAuthClientsStore;
+  private _clientsStore: EverythingOAuthClientsStore
 
   constructor() {
-    this._clientsStore = new EverythingOAuthClientsStore();
+    this._clientsStore = new EverythingOAuthClientsStore()
   }
 
   get clientsStore(): OAuthRegisteredClientsStore {
-    return this._clientsStore;
+    return this._clientsStore
   }
 
   async authorize(client: OAuthClientInformationFull, params: AuthorizationParams, res: Response): Promise<void> {
-
     // Client is validated by the MCP sdk.
 
     // Generate authorization code
-    const authorizationCode = generateToken();
+    const authorizationCode = generateToken()
 
     // Save the pending authorization with code challenge and state
     await savePendingAuthorization(authorizationCode, {
       redirectUri: params.redirectUri,
       codeChallenge: params.codeChallenge,
-      codeChallengeMethod: 'S256', // Currently only support S256
+      codeChallengeMethod: "S256", // Currently only support S256
       clientId: client.client_id,
       state: params.state,
-    });
+    })
 
     // TODO: should we use a different key, other than the authorization code, to store the pending authorization?
-    
+
     // You can redirect to another page, or you can send an html response directly
     // res.redirect(new URL(`fakeupstreamauth/authorize?metadata=${authorizationCode}`, BASE_URI).href);
 
     // Set permissive CSP for styling
-    res.setHeader('Content-Security-Policy', [
-      "default-src 'self'",
-      "style-src 'self' 'unsafe-inline'",
-      "script-src 'self' 'unsafe-inline'",
-      "img-src 'self' data:",
-      "object-src 'none'",
-      "frame-ancestors 'none'",
-      "form-action 'self'",
-      "base-uri 'self'"
-    ].join('; '));
+    res.setHeader(
+      "Content-Security-Policy",
+      [
+        "default-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "script-src 'self' 'unsafe-inline'",
+        "img-src 'self' data:",
+        "object-src 'none'",
+        "frame-ancestors 'none'",
+        "form-action 'self'",
+        "base-uri 'self'",
+      ].join("; "),
+    )
 
     res.send(`
       <!DOCTYPE html>
@@ -264,32 +270,32 @@ export class EverythingAuthProvider implements OAuthServerProvider {
           </div>
         </body>
       </html>
-    `);
+    `)
   }
 
   async challengeForAuthorizationCode(client: OAuthClientInformationFull, authorizationCode: string): Promise<string> {
-    const pendingAuth = await readPendingAuthorization(authorizationCode);
+    const pendingAuth = await readPendingAuthorization(authorizationCode)
     if (!pendingAuth) {
-      throw new Error('Authorization code not found');
+      throw new Error("Authorization code not found")
     }
 
     if (pendingAuth.clientId !== client.client_id) {
-      throw new Error('Authorization code does not match client');
+      throw new Error("Authorization code does not match client")
     }
 
-    return pendingAuth.codeChallenge;
+    return pendingAuth.codeChallenge
   }
 
   async exchangeAuthorizationCode(client: OAuthClientInformationFull, authorizationCode: string): Promise<OAuthTokens> {
-    const tokenData = await exchangeToken(authorizationCode);
+    const tokenData = await exchangeToken(authorizationCode)
     if (!tokenData) {
-      throw new Error('Invalid authorization code');
+      throw new Error("Invalid authorization code")
     }
 
     // Get the MCP installation to retrieve the full token data including refresh token
-    const mcpInstallation = await readMcpInstallation(tokenData.mcpAccessToken);
+    const mcpInstallation = await readMcpInstallation(tokenData.mcpAccessToken)
     if (!mcpInstallation) {
-      throw new Error('Failed to retrieve MCP installation');
+      throw new Error("Failed to retrieve MCP installation")
     }
 
     // Return the full token data including refresh token
@@ -297,32 +303,36 @@ export class EverythingAuthProvider implements OAuthServerProvider {
       access_token: mcpInstallation.mcpTokens.access_token,
       refresh_token: mcpInstallation.mcpTokens.refresh_token,
       expires_in: mcpInstallation.mcpTokens.expires_in,
-      token_type: 'Bearer',
-    };
+      token_type: "Bearer",
+    }
   }
 
-  async exchangeRefreshToken(client: OAuthClientInformationFull, refreshToken: string, _scopes?: string[]): Promise<OAuthTokens> {
-    const accessToken = await readRefreshToken(refreshToken);
+  async exchangeRefreshToken(
+    client: OAuthClientInformationFull,
+    refreshToken: string,
+    _scopes?: string[],
+  ): Promise<OAuthTokens> {
+    const accessToken = await readRefreshToken(refreshToken)
 
     if (!accessToken) {
-      throw new Error('Invalid refresh token');
+      throw new Error("Invalid refresh token")
     }
 
-    const mcpInstallation = await readMcpInstallation(accessToken);
+    const mcpInstallation = await readMcpInstallation(accessToken)
 
     if (!mcpInstallation) {
-      throw new Error('Invalid refresh token');
+      throw new Error("Invalid refresh token")
     }
 
     // Check the client_id
     if (mcpInstallation.clientId !== client.client_id) {
-      throw new Error('Invalid client');
+      throw new Error("Invalid client")
     }
-    
-    const newTokens = generateMcpTokens();
+
+    const newTokens = generateMcpTokens()
 
     if (newTokens.refresh_token) {
-      await saveRefreshToken(newTokens.refresh_token, newTokens.access_token);
+      await saveRefreshToken(newTokens.refresh_token, newTokens.access_token)
     }
 
     // Update the installation with the new tokens
@@ -331,41 +341,39 @@ export class EverythingAuthProvider implements OAuthServerProvider {
       mcpTokens: newTokens,
       issuedAt: Date.now() / 1000,
       userId: mcpInstallation.userId, // Preserve the user ID
-    });
+    })
 
-    return newTokens;
+    return newTokens
   }
 
   async verifyAccessToken(token: string): Promise<AuthInfo> {
-    const installation = await readMcpInstallation(token);
+    const installation = await readMcpInstallation(token)
     if (!installation) {
-      throw new InvalidTokenError("Invalid access token");
+      throw new InvalidTokenError("Invalid access token")
     }
 
-    const expiresAt = (
-      installation.mcpTokens.expires_in
+    const expiresAt = installation.mcpTokens.expires_in
       ? installation.mcpTokens.expires_in + installation.issuedAt
       : undefined
-    );
 
     // This can be removed once in the SDK
     // Check if the token is expired
     if (!!expiresAt && expiresAt < Date.now() / 1000) {
-      throw new InvalidTokenError("Token has expired");
+      throw new InvalidTokenError("Token has expired")
     }
-    
+
     return {
       token,
       clientId: installation.clientId,
-      scopes: ['mcp'],
+      scopes: ["mcp"],
       expiresAt,
       extra: {
-        userId: installation.userId
-      }
-    };
+        userId: installation.userId,
+      },
+    }
   }
 
   async revokeToken(client: OAuthClientInformationFull, request: OAuthTokenRevocationRequest): Promise<void> {
-    await revokeMcpInstallation(request.token);
+    await revokeMcpInstallation(request.token)
   }
 }

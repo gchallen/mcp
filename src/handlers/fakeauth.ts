@@ -1,8 +1,14 @@
-import { Request, Response } from "express";
-import { generateMcpTokens, readPendingAuthorization, saveMcpInstallation, saveRefreshToken, saveTokenExchange } from "../services/auth.js";
-import { McpInstallation } from "../types.js";
+import { Request, Response } from "express"
+import {
+  generateMcpTokens,
+  readPendingAuthorization,
+  saveMcpInstallation,
+  saveRefreshToken,
+  saveTokenExchange,
+} from "../services/auth.js"
+import { McpInstallation } from "../types.js"
 
-// this module has a fake upstream auth server that returns a fake auth code, it also allows you to authorize or fail 
+// this module has a fake upstream auth server that returns a fake auth code, it also allows you to authorize or fail
 // authorization, to test the different flows
 
 // TODO: make an implementation of this using the ProxyAuthProvider
@@ -10,18 +16,21 @@ import { McpInstallation } from "../types.js";
 // This is mocking an upstream auth server. This wouldn't normally be in the same server as the MCP auth server
 export async function handleFakeAuthorize(req: Request, res: Response) {
   // get the redirect_uri and state from the query params
-  const { redirect_uri, state } = req.query;
+  const { redirect_uri, state } = req.query
 
   // Set a more permissive CSP for auth pages to allow inline styles and scripts
-  res.setHeader('Content-Security-Policy', [
-    "default-src 'self'",
-    "style-src 'self' 'unsafe-inline'",    // Allow inline styles for auth page styling
-    "script-src 'self' 'unsafe-inline'",   // Allow inline scripts for auth page functionality
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "form-action 'self'",
-    "base-uri 'self'"
-  ].join('; '));
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "style-src 'self' 'unsafe-inline'", // Allow inline styles for auth page styling
+      "script-src 'self' 'unsafe-inline'", // Allow inline scripts for auth page functionality
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "base-uri 'self'",
+    ].join("; "),
+  )
 
   res.send(`
     <!DOCTYPE html>
@@ -253,9 +262,8 @@ export async function handleFakeAuthorize(req: Request, res: Response) {
         </script>
       </body>
     </html>
-  `);
+  `)
 }
-
 
 // This is the callback URL that the upstream auth server will redirect to after authorization
 export async function handleFakeAuthorizeRedirect(req: Request, res: Response) {
@@ -264,24 +272,23 @@ export async function handleFakeAuthorizeRedirect(req: Request, res: Response) {
     state: mcpAuthorizationCode,
     code: upstreamAuthorizationCode,
     userId, // User ID from the authorization flow
-  } = req.query;
+  } = req.query
 
   // This is where you'd exchange the upstreamAuthorizationCode for access/refresh tokens
   // In this case, we're just going to fake it
-  const upstreamTokens = await fakeUpstreamTokenExchange(upstreamAuthorizationCode as string);
+  const upstreamTokens = await fakeUpstreamTokenExchange(upstreamAuthorizationCode as string)
 
   // Validate that it's a string
   if (typeof mcpAuthorizationCode !== "string") {
-    throw new Error("Invalid authorization code");
+    throw new Error("Invalid authorization code")
   }
 
-  const pendingAuth = await readPendingAuthorization(mcpAuthorizationCode);
+  const pendingAuth = await readPendingAuthorization(mcpAuthorizationCode)
   if (!pendingAuth) {
-    throw new Error("No matching authorization found");
+    throw new Error("No matching authorization found")
   }
 
-
-  const mcpTokens = generateMcpTokens();
+  const mcpTokens = generateMcpTokens()
 
   const mcpInstallation: McpInstallation = {
     fakeUpstreamInstallation: {
@@ -291,29 +298,29 @@ export async function handleFakeAuthorizeRedirect(req: Request, res: Response) {
     mcpTokens,
     clientId: pendingAuth.clientId,
     issuedAt: Date.now() / 1000,
-    userId: (userId as string) || 'anonymous-user', // Include user ID from auth flow
+    userId: (userId as string) || "anonymous-user", // Include user ID from auth flow
   }
 
   // Store the upstream authorization data
-  await saveMcpInstallation(mcpTokens.access_token, mcpInstallation);
+  await saveMcpInstallation(mcpTokens.access_token, mcpInstallation)
 
   // Store the refresh token -> access token mapping
   if (mcpTokens.refresh_token) {
-    await saveRefreshToken(mcpTokens.refresh_token, mcpTokens.access_token);
+    await saveRefreshToken(mcpTokens.refresh_token, mcpTokens.access_token)
   }
 
   // Store the token exchange data
   await saveTokenExchange(mcpAuthorizationCode, {
     mcpAccessToken: mcpTokens.access_token,
     alreadyUsed: false,
-  });
+  })
 
   // Redirect back to the original application with the authorization code and state
-  const redirectUrl = pendingAuth.state ?
-    `${pendingAuth.redirectUri}?code=${mcpAuthorizationCode}&state=${pendingAuth.state}` :
-    `${pendingAuth.redirectUri}?code=${mcpAuthorizationCode}`;
-  res.redirect(redirectUrl);
-};
+  const redirectUrl = pendingAuth.state
+    ? `${pendingAuth.redirectUri}?code=${mcpAuthorizationCode}&state=${pendingAuth.state}`
+    : `${pendingAuth.redirectUri}?code=${mcpAuthorizationCode}`
+  res.redirect(redirectUrl)
+}
 
 function fakeUpstreamTokenExchange(
   authorizationCode: string,
@@ -323,6 +330,6 @@ function fakeUpstreamTokenExchange(
     resolve({
       access_token: `${authorizationCode}-exchanged-for-access-token`,
       refresh_token: `${authorizationCode}-exchanged-for-refresh-token`,
-    });
-  });
+    })
+  })
 }
