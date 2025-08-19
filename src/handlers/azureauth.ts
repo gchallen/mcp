@@ -14,6 +14,7 @@ import {
 } from "../services/auth.js"
 import { McpInstallation } from "../types.js"
 import { logger } from "../logger.js"
+import { BASE_URI } from "../config.js"
 
 // Azure AD configuration
 const msalConfig: Configuration = {
@@ -44,10 +45,10 @@ export async function handleAzureAuthorize(req: Request, res: Response) {
   const { redirect_uri, state } = req.query
 
   try {
-    // Convert relative redirect_uri to absolute URI for Azure AD
+    // Use BASE_URI to construct absolute redirect URI for Azure AD
     const redirectUri = (redirect_uri as string).startsWith("http")
       ? (redirect_uri as string)
-      : `${req.protocol}://${req.get("host")}${redirect_uri}`
+      : `${BASE_URI}${redirect_uri}`
 
     logger.info("Azure OAuth authorization request", {
       redirectUri: redirectUri,
@@ -107,9 +108,7 @@ export async function handleAzureAuthorizeRedirect(req: Request, res: Response) 
     // Exchange the Azure authorization code for tokens
     // Must use the SAME redirect URI that was used for authorization (our server's callback)
     const authorizationRedirectUri = `/azureauth/callback`
-    const absoluteAuthRedirectUri = authorizationRedirectUri.startsWith("http")
-      ? authorizationRedirectUri
-      : `${req.protocol}://${req.get("host")}${authorizationRedirectUri}`
+    const absoluteAuthRedirectUri = `${BASE_URI}${authorizationRedirectUri}`
 
     const tokenRequest: AuthorizationCodeRequest = {
       code: azureAuthorizationCode,
