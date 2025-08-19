@@ -14,6 +14,7 @@ export interface RedisClient {
   lpush(key: string, ...values: string[]): Promise<number>
   lrange(key: string, start: number, stop: number): Promise<string[]>
   connect(): Promise<void>
+  disconnect(): Promise<void>
   on(event: string, callback: (error: Error) => void): void
   options?: { url: string }
   exists(key: string): Promise<boolean>
@@ -89,6 +90,10 @@ export class RedisClientImpl implements RedisClient {
 
   async connect(): Promise<void> {
     await this.redis.connect()
+  }
+
+  async disconnect(): Promise<void> {
+    await this.redis.disconnect()
   }
 
   on(event: string, callback: (error: Error) => void): void {
@@ -198,6 +203,10 @@ export class MockRedisClient implements RedisClient {
   }
 
   async connect(): Promise<void> {
+    // No-op in mock
+  }
+
+  async disconnect(): Promise<void> {
     // No-op in mock
   }
 
