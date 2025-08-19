@@ -144,6 +144,35 @@ describe("EverythingAuthProvider", () => {
       expect(sentHtml).toContain("Authorization Required")
       expect(sentHtml).toContain("fakeupstreamauth/authorize?redirect_uri=/fakeupstreamauth/callback&state=")
     })
+
+    it("should use Azure OAuth when environment variables are configured", async () => {
+      // Mock environment variables for Azure OAuth
+      const originalEnv = process.env
+      process.env = {
+        ...originalEnv,
+        AZURE_CLIENT_ID: "test-client-id",
+        AZURE_CLIENT_SECRET: "test-client-secret",
+        AZURE_AUTHORITY: "https://login.microsoftonline.com/test-tenant",
+      }
+
+      const client = createTestClient()
+      const params = {
+        redirectUri: "https://example.com/callback",
+        codeChallenge: "test-challenge",
+        codeChallengeMethod: "S256",
+      } as unknown as AuthorizationParams
+      const res = createMockResponse()
+
+      await provider.authorize(client, params, res)
+
+      // Verify HTML sent contains Azure OAuth URL
+      expect(res.send).toHaveBeenCalled()
+      const sentHtml = (res.send as jest.Mock).mock.calls[0][0]
+      expect(sentHtml).toContain("azureauth/authorize?redirect_uri=/azureauth/callback&state=")
+
+      // Restore original environment
+      process.env = originalEnv
+    })
   })
 
   describe("challengeForAuthorizationCode", () => {

@@ -22,6 +22,7 @@ import {
   saveRefreshToken,
 } from "../services/auth.js"
 import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.js"
+import { logger } from "../logger.js"
 
 /**
  * Implementation of the OAuthRegisteredClientsStore interface using the existing client registration system
@@ -72,8 +73,20 @@ export class EverythingAuthProvider implements OAuthServerProvider {
 
     // TODO: should we use a different key, other than the authorization code, to store the pending authorization?
 
-    // You can redirect to another page, or you can send an html response directly
-    // res.redirect(new URL(`fakeupstreamauth/authorize?metadata=${authorizationCode}`, BASE_URI).href);
+    // Determine which OAuth provider to use based on environment configuration
+    const isAzureConfigured = !!(
+      process.env.AZURE_CLIENT_ID &&
+      process.env.AZURE_CLIENT_SECRET &&
+      process.env.AZURE_AUTHORITY
+    )
+
+    const authPath = isAzureConfigured
+      ? "/azureauth/authorize?redirect_uri=/azureauth/callback"
+      : "/fakeupstreamauth/authorize?redirect_uri=/fakeupstreamauth/callback"
+
+    logger.info("OAuth provider selection", {
+      provider: isAzureConfigured ? "azure" : "fake",
+    })
 
     // Set permissive CSP for styling
     res.setHeader(
@@ -260,7 +273,7 @@ export class EverythingAuthProvider implements OAuthServerProvider {
               <p>You'll be redirected to authenticate with the upstream provider. Once verified, you'll be granted access to this MCP server's resources.</p>
             </div>
             
-            <a href="/fakeupstreamauth/authorize?redirect_uri=/fakeupstreamauth/callback&state=${authorizationCode}" class="btn-primary">
+            <a href="${authPath}&state=${authorizationCode}" class="btn-primary">
               Continue to Authentication
             </a>
             
