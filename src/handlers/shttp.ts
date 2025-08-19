@@ -12,6 +12,7 @@ import {
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
 import { randomUUID } from "crypto"
 import { createMcpServer } from "../services/mcp.js"
+import { createMcpServerWithAuth } from "../services/mcpWithAuth.js"
 import { logger } from "../logger.js"
 
 declare global {
@@ -88,7 +89,11 @@ export async function handleStreamableHTTP(req: Request, res: Response) {
           userId,
         })
 
-        const { server, cleanup: mcpCleanup } = createMcpServer()
+        // Use authenticated MCP server if we have auth context, otherwise use basic server
+        const mcpAccessToken = req.auth?.token
+        const { server, cleanup: mcpCleanup } = mcpAccessToken
+          ? createMcpServerWithAuth(mcpAccessToken)
+          : createMcpServer()
 
         const serverRedisTransport = new ServerRedisTransport(sessionId)
         serverRedisTransport.onclose = mcpCleanup
