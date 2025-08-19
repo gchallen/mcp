@@ -244,9 +244,12 @@ export async function exchangeToken(
 
   const tokenExchange: TokenExchange = JSON.parse(decoded);
   if (tokenExchange.alreadyUsed) {
-    logger.error('Duplicate use of authorization code detected; revoking tokens', undefined, {
-      authorizationCode: authorizationCode.substring(0, 8) + '...'
-    });
+    // Only log in non-test environments (this is an expected error in tests)
+    if (process.env.NODE_ENV !== 'test') {
+      logger.error('Duplicate use of authorization code detected; revoking tokens', undefined, {
+        authorizationCode: authorizationCode.substring(0, 8) + '...'
+      });
+    }
     await revokeMcpInstallation(tokenExchange.mcpAccessToken);
     throw new Error("Duplicate use of authorization code detected; tokens revoked");
   }
@@ -260,9 +263,12 @@ export async function exchangeToken(
 
   if (rereadData !== data) {
     // Data concurrently changed while we were updating it. This necessarily means a duplicate use.
-    logger.error('Duplicate use of authorization code detected (concurrent update); revoking tokens', undefined, {
-      authorizationCode: authorizationCode.substring(0, 8) + '...'
-    });
+    // Only log in non-test environments (this is an expected error in tests)
+    if (process.env.NODE_ENV !== 'test') {
+      logger.error('Duplicate use of authorization code detected (concurrent update); revoking tokens', undefined, {
+        authorizationCode: authorizationCode.substring(0, 8) + '...'
+      });
+    }
     await revokeMcpInstallation(tokenExchange.mcpAccessToken);
     throw new Error("Duplicate use of authorization code detected; tokens revoked");
   }

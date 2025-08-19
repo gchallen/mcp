@@ -14,6 +14,19 @@ export enum LogSeverity {
   EMERGENCY = 'EMERGENCY'
 }
 
+// Numeric severity levels for comparison
+const SEVERITY_LEVELS: Record<LogSeverity, number> = {
+  [LogSeverity.DEFAULT]: 0,
+  [LogSeverity.DEBUG]: 100,
+  [LogSeverity.INFO]: 200,
+  [LogSeverity.NOTICE]: 300,
+  [LogSeverity.WARNING]: 400,
+  [LogSeverity.ERROR]: 500,
+  [LogSeverity.CRITICAL]: 600,
+  [LogSeverity.ALERT]: 700,
+  [LogSeverity.EMERGENCY]: 800
+};
+
 interface LogContext {
   trace?: string;
   spanId?: string;
@@ -36,10 +49,32 @@ interface StructuredLogEntry {
 class StructuredLogger {
   private asyncLocalStorage = new AsyncLocalStorage<LogContext>();
   private projectId: string | undefined;
+  private minSeverity: LogSeverity;
 
   constructor() {
     // Get project ID from environment or metadata server
     this.projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT;
+    
+    // Set minimum log level based on environment
+    this.minSeverity = this.getMinSeverity();
+  }
+
+  private getMinSeverity(): LogSeverity {
+    // Check LOG_LEVEL environment variable first
+    const logLevel = process.env.LOG_LEVEL?.toUpperCase();
+    if (logLevel && logLevel in LogSeverity) {
+      return LogSeverity[logLevel as keyof typeof LogSeverity];
+    }
+
+    // Set default based on NODE_ENV
+    const nodeEnv = process.env.NODE_ENV;
+    if (nodeEnv === 'test') {
+      return LogSeverity.ERROR;  // Only show errors and above in tests
+    } else if (nodeEnv === 'production') {
+      return LogSeverity.INFO;   // Show info and above in production
+    } else {
+      return LogSeverity.DEBUG;  // Show everything in development
+    }
   }
 
   /**
@@ -89,6 +124,11 @@ class StructuredLogger {
    * Log a structured message
    */
   private log(severity: LogSeverity, message: string, metadata?: Record<string, unknown>) {
+    // Check if this log level should be output
+    if (SEVERITY_LEVELS[severity] < SEVERITY_LEVELS[this.minSeverity]) {
+      return; // Skip logs below minimum severity
+    }
+
     const context = this.asyncLocalStorage.getStore() || {};
     
     const entry: StructuredLogEntry = {
