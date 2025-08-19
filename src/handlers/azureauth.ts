@@ -27,10 +27,13 @@ const msalConfig: Configuration = {
     loggerOptions: {
       loggerCallback: (level, message, containsPii) => {
         if (containsPii) return
-        logger.info(`MSAL ${level}: ${message}`)
+        // Only log warnings and errors to reduce noise
+        if (level <= 2) { // Error (0) and Warning (1) levels only
+          logger.debug(`MSAL ${level}: ${message}`)
+        }
       },
       piiLoggingEnabled: false,
-      logLevel: process.env.NODE_ENV === "production" ? 3 : 1, // Error level in production, Info in dev
+      logLevel: process.env.NODE_ENV === "production" ? 3 : 2, // Error in production, Warning in dev
     },
   },
 }
