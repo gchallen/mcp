@@ -20,10 +20,18 @@
     "format:check": "prettier --check .",
     "tsc": "tsc --noEmit",
     "check": "npm run format && npm run lint && npm run tsc",
-    "docker:build": "docker build -t geoffreychallen/mcp:$(node -p \"require('./package.json').version\") -t geoffreychallen/mcp:latest .",
-    "docker:push": "npm run docker:push:version && npm run docker:push:latest",
+    "docker:build": "docker buildx build --platform linux/amd64,linux/arm64 -t geoffreychallen/mcp:$(node -p \"require('./package.json').version\") -t geoffreychallen/mcp:latest .",
+    "docker:build:load": "docker buildx build --platform linux/amd64,linux/arm64 --load -t geoffreychallen/mcp:$(node -p \"require('./package.json').version\") -t geoffreychallen/mcp:latest .",
+    "docker:push": "docker buildx build --platform linux/amd64,linux/arm64 --push -t geoffreychallen/mcp:$(node -p \"require('./package.json').version\") -t geoffreychallen/mcp:latest .",
     "docker:push:version": "docker push geoffreychallen/mcp:$(node -p \"require('./package.json').version\")",
-    "docker:push:latest": "docker push geoffreychallen/mcp:latest"
+    "docker:push:latest": "docker push geoffreychallen/mcp:latest",
+    "k8s:restart": "kubectl rollout restart deployment/mcp-geoffreychallen-com-deployment -n geoffreychallen",
+    "k8s:edit": "kubectl edit deployment/mcp-geoffreychallen-com-deployment -n geoffreychallen",
+    "k8s:logs": "kubectl logs deployment/mcp-geoffreychallen-com-deployment -n geoffreychallen --follow",
+    "k8s:logs:tail": "kubectl logs deployment/mcp-geoffreychallen-com-deployment -n geoffreychallen --tail=100",
+    "k8s:status": "kubectl get deployment/mcp-geoffreychallen-com-deployment -n geoffreychallen -o wide",
+    "k8s:describe": "kubectl describe deployment/mcp-geoffreychallen-com-deployment -n geoffreychallen",
+    "k8s:pods": "kubectl get pods -l app=mcp-geoffreychallen-com -n geoffreychallen"
   },
   "devDependencies": {
     "@eslint/js": "9.33.0",
