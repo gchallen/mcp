@@ -1,7 +1,8 @@
 {
-  "name": "mcp-server-everything",
-  "version": "0.1.0",
-  "description": "Example MCP Server",
+  "name": "@geoffreychallen/mcp",
+  "private": true,
+  "version": "2025.8.0",
+  "description": "Geoffrey Challen's Personal MCP Server",
   "type": "module",
   "main": "dist/index.js",
   "engines": {
@@ -9,8 +10,8 @@
   },
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "tsx watch --inspect src/index.ts",
-    "dev:break": "tsx --inspect-brk watch src/index.ts",
+    "dev": "tsx watch --inspect -r dotenv/config src/index.ts",
+    "dev:break": "tsx --inspect-brk watch -r dotenv/config src/index.ts",
     "build": "tsc && npm run copy-static",
     "copy-static": "mkdir -p dist/static && cp -r src/static/* dist/static/",
     "lint": "eslint src/",
