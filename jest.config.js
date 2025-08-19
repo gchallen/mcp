@@ -16,4 +16,5 @@ export default {
   },
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/scratch/'],
   injectGlobals: true,
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 };

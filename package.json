@@ -4,6 +4,9 @@
   "description": "Example MCP Server",
   "type": "module",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=22.0.0 <24.0.0"
+  },
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch --inspect src/index.ts",
@@ -11,31 +14,31 @@
     "build": "tsc && npm run copy-static",
     "copy-static": "mkdir -p dist/static && cp -r src/static/* dist/static/",
     "lint": "eslint src/",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest"
   },
   "devDependencies": {
-    "@eslint/js": "^9.15.0",
-    "@types/content-type": "^1.1.8",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.10.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.5",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0"
+    "@eslint/js": "9.33.0",
+    "@types/content-type": "1.1.9",
+    "@types/cors": "2.8.19",
+    "@types/express": "5.0.3",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.3.0",
+    "jest": "30.0.5",
+    "ts-jest": "29.4.1",
+    "tsx": "4.20.4",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.40.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.15.1",
-    "@redis/client": "^1.6.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "raw-body": "^3.0.0"
+    "@modelcontextprotocol/sdk": "1.17.3",
+    "@redis/client": "5.8.1",
+    "cors": "2.8.5",
+    "dotenv": "17.2.1",
+    "express": "5.1.0",
+    "raw-body": "3.0.0"
   },
   "overrides": {
-    "@types/express": "^5.0.0",
-    "@types/express-serve-static-core": "^5.0.2"
+    "@types/express": "5.0.3",
+    "@types/express-serve-static-core": "5.0.2"
   }
 }
