@@ -1,5 +1,5 @@
 import { createClient, SetOptions } from "@redis/client"
-import { logger } from "./utils/logger.js"
+import { logger } from "./logger.js"
 
 /**
  * Describes the Redis primitives we use in this application, to be able to mock

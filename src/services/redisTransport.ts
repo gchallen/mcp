@@ -3,7 +3,7 @@ import { redisClient } from "../redis.js"
 import { Transport, TransportSendOptions } from "@modelcontextprotocol/sdk/shared/transport.js"
 import { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js"
 import { JSONRPCMessage, MessageExtraInfo } from "@modelcontextprotocol/sdk/types.js"
-import { logger } from "../utils/logger.js"
+import { logger } from "../logger.js"
 
 let redisTransportCounter = 0
 const notificationStreamId = "__GET_stream"

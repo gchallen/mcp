@@ -12,7 +12,7 @@ import {
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
 import { randomUUID } from "crypto"
 import { createMcpServer } from "../services/mcp.js"
-import { logger } from "../utils/logger.js"
+import { logger } from "../logger.js"
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -52,7 +52,7 @@ export async function handleStreamableHTTP(req: Request, res: Response) {
 
     // if no userid, return 401, we shouldn't get here ideally
     if (!userId) {
-      logger.warning("Request without user ID", {
+      logger.warn("Request without user ID", {
         sessionId,
         hasAuth: !!req.auth,
       })
@@ -65,7 +65,7 @@ export async function handleStreamableHTTP(req: Request, res: Response) {
     // incorrect session for the authed user, return 401
     if (sessionId) {
       if (!(await isSessionOwnedBy(sessionId, userId))) {
-        logger.warning("Session ownership mismatch", {
+        logger.warn("Session ownership mismatch", {
           sessionId,
           userId,
           requestMethod: req.method,
@@ -112,7 +112,7 @@ export async function handleStreamableHTTP(req: Request, res: Response) {
       shttpTransport.onclose = await redisRelayToMcpServer(sessionId, shttpTransport)
     } else {
       // Invalid request - no session ID and not initialization request
-      logger.warning("Invalid request: no session ID and not initialization", {
+      logger.warn("Invalid request: no session ID and not initialization", {
         hasSessionId: !!sessionId,
         isInitRequest: false,
         userId,

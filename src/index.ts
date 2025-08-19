@@ -18,7 +18,7 @@ import { handleFakeAuthorize, handleFakeAuthorizeRedirect } from "./handlers/fak
 import { handleStreamableHTTP } from "./handlers/shttp.js"
 import { handleMessage, handleSSEConnection } from "./handlers/sse.js"
 import { redisClient } from "./redis.js"
-import { logger } from "./utils/logger.js"
+import { logger } from "./logger.js"
 
 const app = express()
 
@@ -117,8 +117,7 @@ const corsOptions = {
 
 app.use(express.json())
 
-// Add structured logging context middleware first
-app.use(logger.middleware())
+// Note: Removed custom logging middleware - using simple log4js now
 
 // Then add the logging middleware
 app.use(loggingMiddleware)

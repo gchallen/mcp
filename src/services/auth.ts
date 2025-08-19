@@ -3,7 +3,7 @@ import crypto from "crypto"
 import { redisClient } from "../redis.js"
 import { McpInstallation, PendingAuthorization, TokenExchange } from "../types.js"
 import { OAuthClientInformationFull, OAuthTokens } from "@modelcontextprotocol/sdk/shared/auth.js"
-import { logger } from "../utils/logger.js"
+import { logger } from "../logger.js"
 
 export function generatePKCEChallenge(verifier: string): string {
   const buffer = Buffer.from(verifier)
@@ -208,7 +208,7 @@ export async function exchangeToken(authorizationCode: string): Promise<TokenExc
   if (tokenExchange.alreadyUsed) {
     // Only log in non-test environments (this is an expected error in tests)
     if (process.env.NODE_ENV !== "test") {
-      logger.error("Duplicate use of authorization code detected; revoking tokens", undefined, {
+      logger.error("Duplicate use of authorization code detected; revoking tokens", {
         authorizationCode: authorizationCode.substring(0, 8) + "...",
       })
     }
@@ -227,7 +227,7 @@ export async function exchangeToken(authorizationCode: string): Promise<TokenExc
     // Data concurrently changed while we were updating it. This necessarily means a duplicate use.
     // Only log in non-test environments (this is an expected error in tests)
     if (process.env.NODE_ENV !== "test") {
-      logger.error("Duplicate use of authorization code detected (concurrent update); revoking tokens", undefined, {
+      logger.error("Duplicate use of authorization code detected (concurrent update); revoking tokens", {
         authorizationCode: authorizationCode.substring(0, 8) + "...",
       })
     }

@@ -5,7 +5,7 @@ import { Request, Response } from "express"
 import { redisClient } from "../redis.js"
 import { createMcpServer } from "../services/mcp.js"
 import { logMcpMessage } from "./common.js"
-import { logger } from "../utils/logger.js"
+import { logger } from "../logger.js"
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

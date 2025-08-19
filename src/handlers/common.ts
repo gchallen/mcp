@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { withContext } from "../context.js"
 import { readMcpInstallation } from "../services/auth.js"
-import { logger } from "../utils/logger.js"
+import { logger } from "../logger.js"
 
 import { JSONRPCError, JSONRPCNotification, JSONRPCRequest, JSONRPCResponse } from "@modelcontextprotocol/sdk/types.js"
 
@@ -24,7 +24,7 @@ export function logMcpMessage(
       })
     }
   } else if ("error" in message) {
-    logger.warning("Received error message", {
+    logger.warn("Received error message", {
       sessionId,
       errorMessage: message.error.message,
       errorCode: message.error.code,
