@@ -1,4 +1,5 @@
 import { OAuthTokens } from "@modelcontextprotocol/sdk/shared/auth.js"
+import { AccountInfo } from "@azure/msal-node"
 
 // authorization code -> PendingAuthorization
 export interface PendingAuthorization {
@@ -20,10 +21,18 @@ export interface FakeUpstreamInstallation {
   fakeRefreshTokenForDemonstration: string
 }
 
+export interface AzureInstallation {
+  accessToken: string
+  idToken?: string
+  account: AccountInfo | null
+  expiresOn?: Date
+}
+
 // This is the object stored in Redis holding the upstream "Installation" + all the relevant MCP tokens
 // It is stored encrypted by the MCP access token
 export interface McpInstallation {
-  fakeUpstreamInstallation: FakeUpstreamInstallation
+  fakeUpstreamInstallation?: FakeUpstreamInstallation
+  azureInstallation?: AzureInstallation
   mcpTokens: OAuthTokens
   clientId: string
   issuedAt: number

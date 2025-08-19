@@ -52,7 +52,14 @@ export async function authContext(req: Request, res: Response, next: NextFunctio
   }
 
   // Wrap the rest of the request handling in the context
-  withContext({ mcpAccessToken: token, fakeUpstreamInstallation: mcpInstallation.fakeUpstreamInstallation }, () =>
-    next(),
+  withContext(
+    {
+      mcpAccessToken: token,
+      fakeUpstreamInstallation: mcpInstallation.fakeUpstreamInstallation || {
+        fakeAccessTokenForDemonstration: "",
+        fakeRefreshTokenForDemonstration: "",
+      },
+    },
+    () => next(),
   )
 }
