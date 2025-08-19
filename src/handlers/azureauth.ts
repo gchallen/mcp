@@ -14,7 +14,7 @@ import {
 } from "../services/auth.js"
 import { McpInstallation } from "../types.js"
 import { logger } from "../logger.js"
-import { BASE_URI } from "../config.js"
+import { BASE_URI, APPROVED_USERS } from "../config.js"
 
 // Azure AD configuration
 const msalConfig: Configuration = {
@@ -127,8 +127,21 @@ export async function handleAzureAuthorizeRedirect(req: Request, res: Response) 
       throw new Error("Failed to acquire token from Azure AD")
     }
 
-    // Extract user information from the ID token
+    // Extract user information from the Azure tokens
     const userId = tokenResponse.account?.homeAccountId || tokenResponse.account?.localAccountId || "unknown-user"
+    const userEmail = tokenResponse.account?.username?.toLowerCase() || null
+
+    // Check if user is approved (only for Azure OAuth)
+    if (APPROVED_USERS.length > 0) {
+      if (!userEmail) {
+        throw new Error("No email address found in Azure token")
+      }
+      if (!APPROVED_USERS.includes(userEmail)) {
+        logger.warn("Unauthorized user attempted access", { email: userEmail })
+        throw new Error(`Access denied: ${userEmail} is not in the approved users list`)
+      }
+      logger.info("Approved user authenticated", { email: userEmail })
+    }
 
     // Generate MCP tokens
     const mcpTokens = generateMcpTokens()
@@ -140,6 +153,7 @@ export async function handleAzureAuthorizeRedirect(req: Request, res: Response) 
         idToken: tokenResponse.idToken || undefined,
         account: tokenResponse.account,
         expiresOn: tokenResponse.expiresOn || undefined,
+        userEmail: userEmail || undefined,
       },
       mcpTokens,
       clientId: pendingAuth.clientId,

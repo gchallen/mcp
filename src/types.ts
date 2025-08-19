@@ -26,6 +26,7 @@ export interface AzureInstallation {
   idToken?: string
   account: AccountInfo | null
   expiresOn?: Date
+  userEmail?: string
 }
 
 // This is the object stored in Redis holding the upstream "Installation" + all the relevant MCP tokens

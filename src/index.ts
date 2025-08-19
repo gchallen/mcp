@@ -13,7 +13,7 @@ import path from "path"
 import { fileURLToPath } from "url"
 import { EverythingAuthProvider } from "./auth/provider.js"
 import { BASE_URI, PORT } from "./config.js"
-import { authContext } from "./handlers/common.js"
+import { authContext, userAuthorization } from "./handlers/common.js"
 import { handleFakeAuthorize, handleFakeAuthorizeRedirect } from "./handlers/fakeauth.js"
 import { handleAzureAuthorize, handleAzureAuthorizeRedirect, handleAzureHealthCheck } from "./handlers/azureauth.js"
 import { handleStreamableHTTP } from "./handlers/shttp.js"
@@ -190,18 +190,18 @@ app.get("/health", async (req, res) => {
 })
 
 // Root route handler for MCP connections
-app.post("/", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
-app.get("/", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
-app.delete("/", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
+app.post("/", cors(corsOptions), bearerAuth, authContext, userAuthorization, handleStreamableHTTP)
+app.get("/", cors(corsOptions), bearerAuth, authContext, userAuthorization, handleStreamableHTTP)
+app.delete("/", cors(corsOptions), bearerAuth, authContext, userAuthorization, handleStreamableHTTP)
 
 // MCP routes (legacy SSE transport)
-app.get("/sse", cors(corsOptions), bearerAuth, authContext, sseHeaders, handleSSEConnection)
-app.post("/message", cors(corsOptions), bearerAuth, authContext, sensitiveDataHeaders, handleMessage)
+app.get("/sse", cors(corsOptions), bearerAuth, authContext, userAuthorization, sseHeaders, handleSSEConnection)
+app.post("/message", cors(corsOptions), bearerAuth, authContext, userAuthorization, sensitiveDataHeaders, handleMessage)
 
 // MCP routes (new streamable HTTP transport)
-app.get("/mcp", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
-app.post("/mcp", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
-app.delete("/mcp", cors(corsOptions), bearerAuth, authContext, handleStreamableHTTP)
+app.get("/mcp", cors(corsOptions), bearerAuth, authContext, userAuthorization, handleStreamableHTTP)
+app.post("/mcp", cors(corsOptions), bearerAuth, authContext, userAuthorization, handleStreamableHTTP)
+app.delete("/mcp", cors(corsOptions), bearerAuth, authContext, userAuthorization, handleStreamableHTTP)
 
 // Static assets
 app.get("/mcp-logo.png", (req, res) => {

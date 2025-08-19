@@ -21,6 +21,12 @@ AZURE_CLIENT_ID=your-azure-app-client-id
 AZURE_CLIENT_SECRET=your-azure-app-client-secret
 AZURE_AUTHORITY=https://login.microsoftonline.com/your-tenant-id
 
+# User Authorization (Optional)
+# Comma-separated list of approved user email addresses
+# Only users with these email addresses can access MCP endpoints
+# If not set, all authenticated users are allowed
+APPROVED_USERS=user1@company.com,admin@company.com,developer@company.com
+
 # Optional: Set log level for MSAL debugging
 LOG_LEVEL=info
 ```
@@ -72,12 +78,42 @@ The system now supports both fake OAuth (for testing) and Azure OAuth (for produ
 - **Azure OAuth routes:** `/azureauth/*` (new production routes)
 - **Default behavior:** Auth provider now redirects to Azure OAuth
 
+## User Authorization
+
+The system supports restricting MCP access to approved users only:
+
+- **APPROVED_USERS**: Comma-separated list of email addresses
+- **Azure OAuth Only**: User restrictions only apply to Azure AD authentication
+- **Fake OAuth**: Development mode bypasses user restrictions
+- **Case Insensitive**: Email addresses are normalized to lowercase
+
+### Examples:
+
+```env
+# Allow specific users
+APPROVED_USERS=alice@company.com,bob@company.com
+
+# Allow domain
+APPROVED_USERS=admin@company.com,dev-team@company.com
+
+# No restrictions (allow all authenticated users)
+# APPROVED_USERS=
+```
+
+### User Authorization Flow:
+
+1. User authenticates via Azure AD
+2. Email extracted from Azure token (`username` field)
+3. Email checked against APPROVED_USERS list
+4. Access granted/denied for MCP operations
+
 ## Security Considerations
 
 - Client secrets should be stored securely and never committed to version control
 - The MSAL library handles token refresh automatically using internal caching
 - Refresh tokens are not exposed directly for security reasons
 - Use HTTPS in production for all OAuth endpoints
+- User email restrictions provide additional access control layer
 
 ## Testing
 
