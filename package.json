@@ -48,6 +48,7 @@
     "typescript-eslint": "8.40.0"
   },
   "dependencies": {
+    "@azure/msal-node": "^3.7.1",
     "@modelcontextprotocol/sdk": "1.17.3",
     "@redis/client": "5.8.1",
     "@types/log4js": "^0.0.33",
