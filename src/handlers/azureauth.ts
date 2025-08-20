@@ -61,8 +61,8 @@ export async function handleAzureAuthorize(req: Request, res: Response) {
     // Build the authorization URL request - use our server's callback for token exchange
     const authUrlRequest: AuthorizationUrlRequest = {
       scopes: [
-        "openid", 
-        "profile", 
+        "openid",
+        "profile",
         "email",
         "offline_access",
         "User.Read",
@@ -70,7 +70,7 @@ export async function handleAzureAuthorize(req: Request, res: Response) {
         "Mail.Send",
         "Calendars.Read",
         "Calendars.ReadWrite",
-        "Contacts.Read"
+        "Contacts.Read",
       ],
       redirectUri: redirectUri, // Our server's callback: http://localhost:XXXX/azureauth/callback
       state: state as string,
@@ -128,8 +128,8 @@ export async function handleAzureAuthorizeRedirect(req: Request, res: Response) 
     const tokenRequest: AuthorizationCodeRequest = {
       code: azureAuthorizationCode,
       scopes: [
-        "openid", 
-        "profile", 
+        "openid",
+        "profile",
         "email",
         "offline_access",
         "User.Read",
@@ -137,7 +137,7 @@ export async function handleAzureAuthorizeRedirect(req: Request, res: Response) 
         "Mail.Send",
         "Calendars.Read",
         "Calendars.ReadWrite",
-        "Contacts.Read"
+        "Contacts.Read",
       ],
       redirectUri: absoluteAuthRedirectUri, // Same URI used for authorization
     }
